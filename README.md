@@ -1,5 +1,5 @@
 # lustre-sandbox
-lustre zfs HPC High Performance Computing benchmark
+lustre zfs HPC vagrant kvm libvirt travisci pipeline  benchmark
 
 Travis (.com) dev branch:
 [![Build Status](https://travis-ci.com/githubfoam/lustre-sandbox.svg?branch=master)](https://travis-ci.com/githubfoam/lustre-sandbox)  
