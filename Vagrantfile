@@ -311,7 +311,6 @@ __EOF"
 				echo "             (__)\       )\/\                                                      "
 				echo "                 ||----w |                                                         "
 				echo "                 ||     ||                                                         "
-				lfs df -h
 				SHELL
 		end
 	end
