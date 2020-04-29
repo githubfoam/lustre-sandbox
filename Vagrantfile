@@ -302,6 +302,17 @@ __EOF"
 			c.vm.network "private_network",
 				ip: "#{lnet_pfx}.3#{c_idx}",
 				netmask: "255.255.255.0"
+				c.vm.provision "shell", inline: <<-SHELL
+				echo "===================================================================================="
+																	hostnamectl status
+				echo "===================================================================================="
+				echo "         \   ^__^                                                                  "
+				echo "          \  (oo)\_______                                                          "
+				echo "             (__)\       )\/\                                                      "
+				echo "                 ||----w |                                                         "
+				echo "                 ||     ||                                                         "
+				lfs df -h
+				SHELL
 		end
 	end
 end
