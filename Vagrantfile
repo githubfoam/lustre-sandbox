@@ -291,7 +291,8 @@ __EOF"
 	# Create a set of compute nodes.
 	# By default, only 2 compute nodes are created.
 	# The configuration supports a maximum of 8 compute nodes.
-	(1..8).each do |c_idx|
+	#(1..8).each do |c_idx|
+	(1..16).each do |c_idx|	
 		config.vm.define "c#{c_idx}",
 			autostart: (c_idx>2 ? false : true) do |c|
 			c.vm.host_name = "#{host_prefix}-c#{c_idx}.lfs.local"
