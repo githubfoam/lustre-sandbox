@@ -11,7 +11,8 @@ Vagrant.configure("2") do |config|
 	# Directory root for additional vdisks for MGT, MDT0, and OSTs
 	vdisk_root = "#{ENV['HOME']}/VirtualBox\ VMs/vdisks"
 	# Number of shared disk devices per OSS server pair
-	sdnum=8
+	#sdnum=8
+	sdnum=16
 	# Use pre-built box from CentOS project
 	config.vm.box = "centos/7"
 
