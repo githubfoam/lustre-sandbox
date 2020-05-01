@@ -29,7 +29,7 @@ jobs:
           - vagrant version
           - sudo vagrant plugin install vagrant-libvirt
           - sudo vagrant plugin install vagrant-mutate
-          # - sudo vagrant plugin install vagrant-share --plugin-version 1.1.8 #http://wiki.lustre.org/Create_a_Virtual_HPC_Storage_Cluster_with_Vagrant          
+          # - sudo vagrant plugin install vagrant-share --plugin-version 1.1.8 #http://wiki.lustre.org/Create_a_Virtual_HPC_Storage_Cluster_with_Vagrant
           - sudo vagrant status
           - sudo virsh list --all #show all running KVM/libvirt VMs
           - sudo vagrant box add "centos/7" --provider=libvirt
@@ -41,7 +41,7 @@ jobs:
           # - sudo vagrant up --provider=libvirt node-2
           - sudo vagrant status
           - sudo vagrant global-status
-          - sudo vagrant ssh c1 -c "hostnamectl status"
+          - sudo vagrant ssh ct7-c1 -c "hostnamectl status"
           # - sudo vagrant ssh node-1 -c "echo 'hola mundo'"
           # - sudo vagrant ssh node-2 -c "hostnamectl status"
           # - sudo virsh list --all #show all running KVM/libvirt VMs
