@@ -42,6 +42,7 @@ jobs:
           - sudo vagrant status
           - sudo vagrant global-status
           - sudo vagrant ssh c1 -c "hostnamectl status"
+          - sudo vagrant ssh c1 -c "cat /etc/hosts"
           # - sudo vagrant ssh node-1 -c "echo 'hola mundo'"
           # - sudo vagrant ssh node-2 -c "hostnamectl status"
           # - sudo virsh list --all #show all running KVM/libvirt VMs
