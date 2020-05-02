@@ -1,7 +1,6 @@
 ---
 - vagrant_box_host: "vg-irods01"
-  # vagrant_box: "centos/7"
-  vagrant_box: "bento/scientific-7.7"
+  vagrant_box: "centos/7"
   vbox_name: "vbox-irods01"
   vbox_ram: 512
   vbox_cpu: 2
