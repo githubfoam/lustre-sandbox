@@ -1,0 +1,54 @@
+---
+# vars file for lustre
+lustre_groups:
+    quota_usr:
+      ggid: 60000
+    quota_2usr:
+      ggid: 60001
+    mpiuser:
+      ggid: 70000
+    testing:
+      ggid: 70001
+    runas:
+      ggid: 500
+    user1:
+      ggid: 501
+
+lustre_users:
+    quota_usr:
+      uuid: 60000
+      ugroups: quota_usr
+    quota_2usr:
+      uuid: 60001
+      ugroups: quota_2usr
+    mpiuser:
+      uuid: 70000
+      ugroups: mpiuser
+    testing:
+      uuid: 70001
+      ugroups: testing
+    runas:
+      uuid: 500
+      ugroups: runas
+    user1:
+      uuid: 501
+      ugroups: user1
+
+lustre_req_apps_list:
+  - pdsh
+  - compilebench
+  - metabench
+  - simul
+  - mdtest
+  - connectathon
+  - IOR
+  - expect
+  - compat-openmpi16-devel
+  - compat-openmpi16
+  - kexec-tools
+  - mcelog
+  - iozone
+  - cvs
+  - bzip2
+  - dbench
+  - bc

@@ -1,0 +1,43 @@
+- hosts: localhost
+  user: ansible
+  connection: local
+  become: true
+  become_method: sudo
+  gather_facts: no 
+
+  roles:
+    - reboot
+
+- hosts: lustre
+  user: ansible
+  connection: ssh
+  become: true
+  become_method: sudo
+  gather_facts: no 
+
+  roles:
+    - wait
+    - ntp
+    - reprovision
+    - lustre
+
+- hosts: localhost
+  user: ansible
+  connection: local
+  become: true
+  become_method: sudo
+  gather_facts: no
+
+  roles:
+    - reboot
+
+- hosts: lustre
+  user: ansible
+  connection: ssh
+  become: true
+  become_method: sudo
+  gather_facts: no
+
+  roles:
+    - wait
+    - ntp

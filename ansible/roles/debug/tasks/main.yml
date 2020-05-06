@@ -1,0 +1,41 @@
+---
+# tasks file for debug
+- name: Change kdump.conf to enable dump file compression
+  action: lineinfile dest=/etc/kdump.conf regexp=^core_collector line="core_collector makedumpfile -d 17 -c"
+
+- name: Change kdump.conf to dump to /var/crash
+  action: lineinfile dest=/etc/kdump.conf regexp=^path line="path /var/crash"
+
+- name: Change kdump.conf to exit to shell if it can't dump
+  action: lineinfile dest=/etc/kdump.conf regexp=^default line="default shell"
+
+- name: Configure grub with memory to be reserved for crash kernel
+  action: command grubby --update-kernel=ALL --args="crashkernel=256M"
+
+- name: Enable kdump service
+  action: service name=kdump state=started enabled=yes
+  ignore_errors: yes
+
+- name: Set kernel.unknown_nmi_panic
+  sysctl:
+    name: kernel.unknown_nmi_panic
+    value: 1
+    state: present
+
+- name: Set kernel.panic_on_oops
+  sysctl:
+    name: kernel.panic_on_oops
+    value: 1
+    state: present
+
+- name: Set kernel.panic_on_unrecovered_nmi
+  sysctl:
+    name: kernel.panic_on_unrecovered_nmi
+    value: 1
+    state: present
+
+- name: Set kernel.panic
+  sysctl:
+    name: kernel.panic
+    value: 10
+    state: present

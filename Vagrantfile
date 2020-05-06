@@ -1,63 +1,111 @@
-# LUSTRE_BOXEN = 'bento/centos-7.2'
-# CLIENT_BOXEN = 'bento/centos-7.2'
-LUSTRE_BOXEN = 'bento/centos-7.7'
-CLIENT_BOXEN = 'bento/centos-7.7'
-
-OST_DISKS = ['./disks/OST0.vdi']
-MDT_DISKS = ['./disks/MDT0.vdi']
-
-BOX_GROUPING = {
-	'lustre-management' => ['lus-mg0-md0'],
-	'lustre-metadata' => ['lus-mg0-md0'],
-	'lustre-objectstore' => ['lus-oss0'],
-
-	'lustre-clients' => ['client0'],
-	'lustre-servers:children' => ['lustre-management', 'lustre-metadata', 'lustre-objectstore']
-}
-
-# Provides custom disk operation utils for the Virtualbox provider
-require './diskops'
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-	# turn off the default `. => /vagrant` share
-	config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.define "mds" do |mds|
+    mds.vm.box = "lustre_base"
+    mds.vm.hostname = 'mds'
 
-	# Lustre *combined* metadata and management server (MGS+MDS)
-	config.vm.define 'lus-mg0-md0' do |mgmd0|
-		mgmd0.vm.box = LUSTRE_BOXEN
-		mgmd0.vm.network :private_network, ip: "192.168.143.2"
-		mgmd0.vm.provider "virtualbox" do |v|
-			provision_disk(v, MDT_DISKS[0], 1*1024) # 1 gig VDI for metadata
-		end
-	end
+    mds.vm.network :private_network, ip: "192.168.56.101"
+    mds.vm.network :forwarded_port, guest: 22, host: 10122, id: "ssh"
 
-	# Lustre object storage server (OSS, single OST vbox vdisk)
-	config.vm.define 'lus-obj0' do |lo0|
-		lo0.vm.box = LUSTRE_BOXEN
-		lo0.vm.network :private_network, ip: "192.168.143.3"
-		lo0.vm.provider "virtualbox" do |v|
-			provision_disk(v, OST_DISKS[0], 10*1024) # 10 gig VDI for objects
-		end
-	end
+    mds.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "mds"]
 
-	# a Lustre client box, for testing
-	config.vm.define 'client0' do |cl0|
-		cl0.vm.box = CLIENT_BOXEN
-		cl0.vm.network :private_network, type: :dhcp
-	end
+      mdt1 = '/Users/jmiller/project/vagrant/disks/mdt1.vdi'
+      unless File.exist?(mdt1)
+        v.customize ['createhd', '--filename', mdt1, '--size', 5 * 1024]
+      end
+      v.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', mdt1]
 
-	# Install Lustre to all cluster nodes
-	config.vm.provision :ansible do |ansible|
-		ansible.playbook = 'provisioning/install_lustre.yml'
-		ansible.groups = BOX_GROUPING
-	end
+      mdt2 = '/Users/jmiller/project/vagrant/disks/mdt2.vdi'
+      unless File.exist?(mdt2)
+        v.customize ['createhd', '--filename', mdt2, '--size', 5 * 1024]
+      end
+      v.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 1, '--device', 1, '--type', 'hdd', '--medium', mdt2]
+    end
+  end
 
-	# Reboot all nodes
-	config.vm.provision :reload
+  config.vm.define "oss1" do |oss1|
+    oss1.vm.box = "lustre_base"
+    oss1.vm.hostname = 'oss1'
 
-	# Provision the Lustre filesystem
-	config.vm.provision :ansible do |ansible|
-		ansible.playbook = 'provisioning/provision_lustre.yml'
-		ansible.groups = BOX_GROUPING
-	end
+    oss1.vm.network :private_network, ip: "192.168.56.102"
+    oss1.vm.network :forwarded_port, guest: 22, host: 10222, id: "ssh"
+
+    oss1.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "oss1"]
+
+      ost1 = '/Users/jmiller/project/vagrant/disks/ost1.vdi'
+      unless File.exist?(ost1)
+        v.customize ['createhd', '--filename', ost1, '--size', 50 * 1024]
+      end
+      v.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', ost1]
+
+      ost2 = '/Users/jmiller/project/vagrant/disks/ost2.vdi'
+      unless File.exist?(ost2)
+        v.customize ['createhd', '--filename', ost2, '--size', 50 * 1024]
+      end
+      v.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 1, '--device', 1, '--type', 'hdd', '--medium', ost2]
+    end
+  end
+
+  config.vm.define "oss2" do |oss2|
+    oss2.vm.box = "lustre_base"
+    oss2.vm.hostname = 'oss2'
+
+    oss2.vm.network :private_network, ip: "192.168.56.103"
+    oss2.vm.network :forwarded_port, guest: 22, host: 10322, id: "ssh"
+
+    oss2.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "oss2"]
+
+      ost3 = '/Users/jmiller/project/vagrant/disks/ost3.vdi'
+      unless File.exist?(ost3)
+        v.customize ['createhd', '--filename', ost3, '--size', 50 * 1024]
+      end
+      v.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', ost3]
+
+      ost4 = '/Users/jmiller/project/vagrant/disks/ost4.vdi'
+      unless File.exist?(ost4)
+        v.customize ['createhd', '--filename', ost4, '--size', 50 * 1024]
+      end
+      v.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 1, '--device', 1, '--type', 'hdd', '--medium', ost4]
+    end
+  end
+
+  config.vm.define "client1" do |client1|
+    client1.vm.box = "lustre_base"
+    client1.vm.hostname = 'client1'
+
+    client1.vm.network :private_network, ip: "192.168.56.104"
+    client1.vm.network :forwarded_port, guest: 22, host: 10422, id: "ssh"
+
+    client1.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 256]
+      v.customize ["modifyvm", :id, "--name", "client1"]
+    end
+  end
+
+  config.vm.define "client2" do |client2|
+    client2.vm.box = "lustre_base"
+    client2.vm.hostname = 'client2'
+
+    client2.vm.network :private_network, ip: "192.168.56.105"
+    client2.vm.network :forwarded_port, guest: 22, host: 10522, id: "ssh"
+
+    client2.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 256]
+      v.customize ["modifyvm", :id, "--name", "client2"]
+    end
+  end
+
 end

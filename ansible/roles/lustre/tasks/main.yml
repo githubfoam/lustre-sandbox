@@ -1,0 +1,73 @@
+---
+# tasks file for lustre
+- name: Adding User Groups...
+  group: name={{ item.key }} gid={{ item.value.ggid }} state=present
+  with_dict:
+    "{{ lustre_groups }}"
+
+- name: Adding Lustre Specific Users...
+  user: name={{ item.key }} uid={{ item.value.uuid }} group={{ item.value.ugroups }} shell=/bin/bash generate_ssh_key=yes state=present
+  with_dict:
+    "{{ lustre_users }}"
+
+- name: Applying Security Mods...
+  copy: src=files/{{ item }} dest=/etc/ssh/{{ item }}
+  with_items:
+    - sshd_config
+    - ssh_config
+  notify: restart_ssh
+
+- name: Disable SELinux
+  selinux: state=disabled
+
+- name: Adding Lustre-Jenkins Repos...
+  yum_repository:
+    name: lustre-jenkins
+    description: lustre-jenkins
+    baseurl: https://build.hpdd.intel.com/job/lustre-master/arch=x86_64%2Cbuild_type=server%2Cdistro=el7%2Cib_stack=inkernel/lastSuccessfulBuild/artifact/artifacts/
+    enabled: yes
+    gpgcheck: no
+
+- name: Adding e2fsprogs Repos...
+  yum_repository:
+    name: e2fsprogs
+    description: e2fsprogs
+    file: e2fsprogs
+    baseurl: http://build.hpdd.intel.com/job/e2fsprogs-master/arch=x86_64%2Cdistro=el7/lastSuccessfulBuild/artifact/_topdir/RPMS/
+    enabled: yes
+    gpgcheck: no
+
+- name: Adding Lustre Test Toolkit Repo...
+  yum_repository:
+    name: toolkit
+    description: Lustre Test Toolkit
+    file: Lustre-Test-Toolkit
+    baseurl: http://build.hpdd.intel.com/job/toolkit/arch=x86_64%2Cdistro=el7/lastSuccessfulBuild/artifact/_topdir/RPMS/
+    enabled: yes
+    gpgcheck: no
+
+- name: Clear all yum data
+  command: yum clean all
+
+- name: Clear all failed yum transactions
+  command: yum-complete-transaction --cleanup-only
+
+- name: Installing Required Packages...
+  yum: name={{ item }} state=latest
+  async: 1000
+  poll: 5
+  with_items: "{{ lustre_req_apps_list }}"
+
+- name: Install correct connectathon configuration
+  copy: src=files/runtests.wrk dest=/opt/connectathon/general
+
+- name: Installing Lustre Packages...
+  yum: name=lustre state=latest
+  async: 1000
+  poll: 20
+
+- name: Installing Lustre Tests...
+  yum: name=lustre-tests state=latest
+
+- name: Installing Lustre Debug Info...
+  yum: name=lustre-debuginfo state=latest

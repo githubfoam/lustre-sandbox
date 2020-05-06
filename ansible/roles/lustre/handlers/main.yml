@@ -1,0 +1,4 @@
+---
+# handlers file for lustre
+- name: restart_ssh
+  service: name=sshd state=restarted
