@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "mds" do |mds|
-    mds.vm.box = "bento/centos-7.7"
+    mds.vm.box = "bento/centos-7.6"
     mds.vm.hostname = 'mds'
 
     mds.vm.network :private_network, ip: "192.168.56.101"
@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "oss1" do |oss1|
-    oss1.vm.box = "bento/centos-7.7"
+    oss1.vm.box = "bento/centos-7.6"
     oss1.vm.hostname = 'oss1'
 
     oss1.vm.network :private_network, ip: "192.168.56.102"
@@ -55,7 +55,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "oss2" do |oss2|
-    oss2.vm.box = "bento/centos-7.7"
+    oss2.vm.box = "bento/centos-7.6"
     oss2.vm.hostname = 'oss2'
 
     oss2.vm.network :private_network, ip: "192.168.56.103"
@@ -81,7 +81,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "client1" do |client1|
-    client1.vm.box = "bento/centos-7.7"
+    client1.vm.box = "bento/centos-7.6"
     client1.vm.hostname = 'client1'
 
     client1.vm.network :private_network, ip: "192.168.56.104"
@@ -95,7 +95,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "client2" do |client2|
-    client2.vm.box = "bento/centos-7.7"
+    client2.vm.box = "bento/centos-7.6"
     client2.vm.hostname = 'client2'
 
     client2.vm.network :private_network, ip: "192.168.56.105"
