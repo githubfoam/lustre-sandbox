@@ -1,49 +1,63 @@
-Vagrant.require_version ">= 1.6.0"
-VAGRANTFILE_API_VERSION = "2"
-# YAML module for reading box configurations.
-require 'yaml'
-#  server configs from YAML/YML file
+# LUSTRE_BOXEN = 'bento/centos-7.2'
+# CLIENT_BOXEN = 'bento/centos-7.2'
+LUSTRE_BOXEN = 'bento/centos-7.7'
+CLIENT_BOXEN = 'bento/centos-7.7'
 
-servers_list = YAML.load_file(File.join(File.dirname(__FILE__), 'provisioning/servers_list.yml'))
-# servers_list = YAML.load_file(File.join(File.dirname(__FILE__), 'servers_list.yml'))
+OST_DISKS = ['./disks/OST0.vdi']
+MDT_DISKS = ['./disks/MDT0.vdi']
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
- # Disable updates
- config.vm.box_check_update = false
+BOX_GROUPING = {
+	'lustre-management' => ['lus-mg0-md0'],
+	'lustre-metadata' => ['lus-mg0-md0'],
+	'lustre-objectstore' => ['lus-oss0'],
 
-      servers_list.each do |server|
-        config.vm.define server["vagrant_box_host"] do |box|
-          box.vm.box = server["vagrant_box"]
-          box.vm.hostname = server["vagrant_box_host"]
-          box.vm.network server["network_type"], ip: server["vagrant_box_ip"]
-          # box.vm.network "forwarded_port", guest: server["guest_port"], host: server["host_port"]
-          box.vm.provider "virtualbox" do |vb|
-              vb.name = server["vbox_name"]
-              vb.memory = server["vbox_ram"]
-              vb.cpus = server["vbox_cpu"]
-              vb.gui = false
-              vb.customize ["modifyvm", :id, "--groups", "/beegfs-sandbox"] # create vbox group
-          end # end of box.vm.providers
+	'lustre-clients' => ['client0'],
+	'lustre-servers:children' => ['lustre-management', 'lustre-metadata', 'lustre-objectstore']
+}
 
-          box.vm.provision "ansible_local" do |ansible|
-              # ansible.compatibility_mode = "2.0"
-              ansible.compatibility_mode = server["ansible_compatibility_mode"]
-              ansible.version = server["ansible_version"]
-              ansible.playbook = server["server_bootstrap"]
-              ansible.inventory_path = 'provisioning/inventory_localconn'
-              # ansible.verbose = "vvvv" # debug
-           end # end if box.vm.provision
-          box.vm.provision "shell", inline: <<-SHELL
-          echo "===================================================================================="
-                                    hostnamectl status
-          echo "===================================================================================="
-          echo "         \   ^__^                                                                  "
-          echo "          \  (oo)\_______                                                          "
-          echo "             (__)\       )\/\                                                      "
-          echo "                 ||----w |                                                         "
-          echo "                 ||     ||                                                         "
-          SHELL
+# Provides custom disk operation utils for the Virtualbox provider
+require './diskops'
 
-        end # end of config.vm
-      end  # end of servers_list.each loop
-end # end of Vagrant.configure
+Vagrant.configure("2") do |config|
+	# turn off the default `. => /vagrant` share
+	config.vm.synced_folder ".", "/vagrant", disabled: true
+
+	# Lustre *combined* metadata and management server (MGS+MDS)
+	config.vm.define 'lus-mg0-md0' do |mgmd0|
+		mgmd0.vm.box = LUSTRE_BOXEN
+		mgmd0.vm.network :private_network, ip: "192.168.143.2"
+		mgmd0.vm.provider "virtualbox" do |v|
+			provision_disk(v, MDT_DISKS[0], 1*1024) # 1 gig VDI for metadata
+		end
+	end
+
+	# Lustre object storage server (OSS, single OST vbox vdisk)
+	config.vm.define 'lus-obj0' do |lo0|
+		lo0.vm.box = LUSTRE_BOXEN
+		lo0.vm.network :private_network, ip: "192.168.143.3"
+		lo0.vm.provider "virtualbox" do |v|
+			provision_disk(v, OST_DISKS[0], 10*1024) # 10 gig VDI for objects
+		end
+	end
+
+	# a Lustre client box, for testing
+	config.vm.define 'client0' do |cl0|
+		cl0.vm.box = CLIENT_BOXEN
+		cl0.vm.network :private_network, type: :dhcp
+	end
+
+	# Install Lustre to all cluster nodes
+	config.vm.provision :ansible do |ansible|
+		ansible.playbook = 'provisioning/install_lustre.yml'
+		ansible.groups = BOX_GROUPING
+	end
+
+	# Reboot all nodes
+	config.vm.provision :reload
+
+	# Provision the Lustre filesystem
+	config.vm.provision :ansible do |ansible|
+		ansible.playbook = 'provisioning/provision_lustre.yml'
+		ansible.groups = BOX_GROUPING
+	end
+end
