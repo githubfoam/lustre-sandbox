@@ -39,7 +39,7 @@ jobs:
           # - sudo vagrant box add 'bento/centos-7.7' --provider=libvirt
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
-          - sudo vagrant up --provider=libvirt vg-irods01
+          - sudo vagrant up --provider=libvirt 
           - sudo vagrant status
           - sudo vagrant global-status
           # - sudo vagrant ssh vg-irods01 -c "hostnamectl status"
