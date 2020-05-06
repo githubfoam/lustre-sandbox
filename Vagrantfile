@@ -48,6 +48,8 @@ Vagrant.configure("2") do |config|
 
 	# Install Lustre to all cluster nodes
 	config.vm.provision :ansible do |ansible|
+		ansible.compatibility_mode = "2.0"
+		ansible.version = "2.9.7"
 		ansible.playbook = 'provisioning/install_lustre.yml'
 		ansible.groups = BOX_GROUPING
 	end
@@ -57,6 +59,8 @@ Vagrant.configure("2") do |config|
 
 	# Provision the Lustre filesystem
 	config.vm.provision :ansible do |ansible|
+		ansible.compatibility_mode = "2.0"
+		ansible.version = "2.9.7" 
 		ansible.playbook = 'provisioning/provision_lustre.yml'
 		ansible.groups = BOX_GROUPING
 	end
