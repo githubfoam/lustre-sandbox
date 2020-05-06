@@ -34,8 +34,8 @@ jobs:
           - sudo virsh list --all #show all running KVM/libvirt VMs
           - sudo vagrant plugin install vagrant-libvirt #The vagrant-libvirt plugin is required when using KVM on Linux
           - sudo vagrant plugin install vagrant-mutate #Convert vagrant boxes to work with different providers
-          - sudo vagrant box add "bento/centos-7.7"
-          - sudo vagrant mutate "bento/centos-7.7" libvirt
+          - sudo vagrant box add "bento/centos-7.6"
+          - sudo vagrant mutate "bento/centos-7.6" libvirt
           # - sudo vagrant box add 'bento/centos-7.7' --provider=libvirt
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet

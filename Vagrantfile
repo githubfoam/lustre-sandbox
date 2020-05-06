@@ -1,7 +1,7 @@
 # LUSTRE_BOXEN = 'bento/centos-7.2'
 # CLIENT_BOXEN = 'bento/centos-7.2'
-LUSTRE_BOXEN = 'bento/centos-7.7'
-CLIENT_BOXEN = 'bento/centos-7.7'
+LUSTRE_BOXEN = 'bento/centos-7.6'
+CLIENT_BOXEN = 'bento/centos-7.6'
 
 OST_DISKS = ['./disks/OST0.vdi']
 MDT_DISKS = ['./disks/MDT0.vdi']
