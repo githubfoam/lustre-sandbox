@@ -46,7 +46,7 @@ jobs:
           # - sudo vagrant up --provider=libvirt worker2
           - sudo vagrant status
           - sudo vagrant global-status
-          - sudo vagrant ssh manager -c "docker node ls"
+          # - sudo vagrant ssh manager -c "docker node ls"
           - sudo virsh list --all #show all running KVM/libvirt VMs
 after_success:
     - stage: Finalize
