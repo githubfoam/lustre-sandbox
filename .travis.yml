@@ -38,7 +38,8 @@ jobs:
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
           # - sudo vagrant up --provider=libvirt vg-irods01
-          - - travis_wait 30 sudo vagrant up --provider=libvirt
+          - vagrant up --no-parallel --provider=libvirt
+          # - travis_wait 30 sudo vagrant up --provider=libvirt
           - sudo vagrant status
           - sudo vagrant global-status
           # - sudo vagrant ssh devstack_controller -c "hostnamectl status"
