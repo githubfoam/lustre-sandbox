@@ -41,7 +41,8 @@ SCRIPT
 auto = ENV['AUTO_START_SWARM'] || true # create swarm auto mode
 multi_manager =  true # create swarm multi manager mode
 numworkers = 2
-vmmemory = 512
+# vmmemory = 512
+vmmemory = 4096
 # Increase numcpu if you want more cpu's per vm
 numcpu = 1
 instances = []
