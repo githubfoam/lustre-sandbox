@@ -51,8 +51,8 @@ instances = []
 end
 
 manager_ip = "192.168.10.2"
-manager_token = "SWMTKN-1-4bhjrnap6849jq99eodro107wh5tcu0mo0nv0xzsl0fdmg7i8d-7sjpc3qdfmn8byqg91zj35724"
-token = "SWMTKN-1-4bhjrnap6849jq99eodro107wh5tcu0mo0nv0xzsl0fdmg7i8d-784zsv2m64hv429dzxa5d7gsm"
+# manager_token = "SWMTKN-1-4bhjrnap6849jq99eodro107wh5tcu0mo0nv0xzsl0fdmg7i8d-7sjpc3qdfmn8byqg91zj35724"
+# token = "SWMTKN-1-4bhjrnap6849jq99eodro107wh5tcu0mo0nv0xzsl0fdmg7i8d-784zsv2m64hv429dzxa5d7gsm"
 
 File.open("./hosts", 'w') { |file|
   instances.each do |i|
@@ -116,8 +116,8 @@ Vagrant.configure("2") do |config|
                   end # if File.file?("./hosts")
 
                   if auto
-                      i.vm.provision "shell", inline: "docker swarm join --token `cat /vagrant/manager_token` #{manager_ip}:2377"
                       i.vm.provision "shell", inline: "cat /vagrant/manager_token"
+                      i.vm.provision "shell", inline: "docker swarm join --token `cat /vagrant/manager_token` #{manager_ip}:2377"
                   end # if auto
 
                 end
@@ -136,8 +136,8 @@ Vagrant.configure("2") do |config|
             i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
           end
           if auto
-            i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
             i.vm.provision "shell", inline: "cat /vagrant/token"
+            i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
           end
       end
      end
