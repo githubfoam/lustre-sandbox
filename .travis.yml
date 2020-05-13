@@ -41,15 +41,16 @@ jobs:
           # - sudo vagrant up --no-parallel --provider=libvirt # vagrant serial runs
           # - travis_wait 30 sudo vagrant up --provider=libvirt
           - sudo vagrant up --provider=libvirt manager
+          - ls -lai
           - sudo cat manager_token
           - sudo cat token
-          - sudo vagrant up --provider=libvirt manager1
-          - sudo cat manager_token
-          - sudo cat token
-          - sudo vagrant up --provider=libvirt worker1
-          - sudo vagrant up --provider=libvirt worker2
-          - sudo cat manager_token
-          - sudo cat token          
+          # - sudo vagrant up --provider=libvirt manager1
+          # - sudo cat manager_token
+          # - sudo cat token
+          # - sudo vagrant up --provider=libvirt worker1
+          # - sudo vagrant up --provider=libvirt worker2
+          # - sudo cat manager_token
+          # - sudo cat token
           - sudo vagrant status
           - sudo vagrant global-status
           # - sudo vagrant ssh manager -c "docker node ls"
