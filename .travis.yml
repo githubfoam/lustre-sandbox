@@ -33,27 +33,17 @@ jobs:
           # - sudo vagrant plugin install vagrant-vbguest #https://docs.openstack.org/developer/dragonflow/installation.html
           - sudo vagrant status
           - sudo virsh list --all #show all running KVM/libvirt VMs
-          - sudo vagrant box add "bento/centos-7.6"
-          - sudo vagrant mutate "bento/centos-7.6" libvirt
+          - sudo vagrant box add "bento/ubuntu-16.04"
+          - sudo vagrant mutate "bento/ubuntu-16.04" libvirt
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
           # - sudo vagrant up --provider=libvirt vg-irods01
           # - sudo vagrant up --no-parallel --provider=libvirt # vagrant serial runs
           # - travis_wait 30 sudo vagrant up --provider=libvirt
-          - sudo vagrant up --provider=libvirt manager
-          - ls -lai
-          - sudo cat manager_token
-          - sudo cat token
-          # - sudo vagrant up --provider=libvirt manager1
-          # - sudo cat manager_token
-          # - sudo cat token
-          # - sudo vagrant up --provider=libvirt worker1
-          # - sudo vagrant up --provider=libvirt worker2
-          # - sudo cat manager_token
-          # - sudo cat token
+          - sudo vagrant up --provider=libvirt
           - sudo vagrant status
           - sudo vagrant global-status
-          # - sudo vagrant ssh manager -c "docker node ls"
+          - sudo vagrant ssh node0 -c "docker node ls"
           - sudo virsh list --all #show all running KVM/libvirt VMs
 after_success:
     - stage: Finalize

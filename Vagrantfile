@@ -5,145 +5,166 @@
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
-$etcd1_script = <<SCRIPT
-# Get Docker Engine - Community for CentOS
-# https://docs.docker.com/install/linux/docker-ce/centos/
-sudo yum remove docker \
-docker-client \
-docker-client-latest \
-docker-common \
-docker-latest \
-docker-latest-logrotate \
-docker-logrotate \
-docker-engine
-sudo yum install -y yum-utils \
-device-mapper-persistent-data \
-lvm2
-sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-# sudo yum install -y docker-ce \
-# docker-ce-cli \
-# containerd.io
-sudo yum install -y docker-ce-19.03.2 \
-docker-ce-cli-19.03.2 \
-containerd.io
-sudo systemctl enable docker
-sudo systemctl start docker && sudo docker --version
-# sudo groupadd docker
-sudo usermod -aG docker vagrant # add user to the docker group
-# Install Docker Compose
-# https://docs.docker.com/compose/install/
-# sudo curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-# sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-# sudo docker-compose --version
-docker --version
-hostnamectl status
-SCRIPT
-auto = ENV['AUTO_START_SWARM'] || true # create swarm auto mode
-multi_manager =  true # create swarm multi manager mode
-numworkers = 2
-# vmmemory = 512
-vmmemory = 4096
-# Increase numcpu if you want more cpu's per vm
-numcpu = 1
-instances = []
-(1..numworkers).each do |n|
-  instances.push({:name => "worker#{n}", :ip => "192.168.10.2#{n+2}"})
-end
 
-manager_ip = "192.168.10.2"
-# manager_token = "SWMTKN-1-4bhjrnap6849jq99eodro107wh5tcu0mo0nv0xzsl0fdmg7i8d-7sjpc3qdfmn8byqg91zj35724"
-# token = "SWMTKN-1-4bhjrnap6849jq99eodro107wh5tcu0mo0nv0xzsl0fdmg7i8d-784zsv2m64hv429dzxa5d7gsm"
+# Ensure yaml module is loaded
+require 'yaml'
 
-File.open("./hosts", 'w') { |file|
-  instances.each do |i|
-    file.write("#{i[:ip]} #{i[:name]}.local #{i[:name]}\n")
+# Read yaml node definitions to create
+# **Update nodes.yml to reflect any changes
+nodes = YAML.load_file(File.join(File.dirname(__FILE__), 'nodes.yml'))
+
+# Define global variables
+#
+
+Vagrant.configure(2) do |config|
+  # Iterate over nodes to get a count
+  # Define as 0 for counting the number of nodes to create from nodes.yml
+  groups = [] # Define array to hold ansible groups
+  num_nodes = 0
+  populated_ansible_groups = {} # Create hash to contain iterated groups
+
+  # Create array of Ansible Groups from iterated nodes
+  nodes.each do |node|
+    num_nodes = node
+    node['ansible_groups'].each do |group|
+      groups.push(group)
+    end
   end
-  file.write("#{manager_ip} manager.local manager\n")
-}
 
+  # Remove duplicate Ansible Groups
+  groups = groups.uniq
 
-# Vagrant version requirement
-Vagrant.require_version ">= 1.8.4"
-
-Vagrant.configure("2") do |config|
-
-    config.vm.provider "virtualbox" do |v|
-     	v.memory = vmmemory
-  	  v.cpus = numcpu
-      v.customize ["modifyvm", :id, "--groups", "/swarm-centos-sandbox"] # create vbox group
+  # Iterate through array of Ansible Groups
+  groups.each do |group|
+    group_nodes = []
+    # Iterate list of nodes
+    nodes.each do |node|
+      node['ansible_groups'].each do |nodegroup|
+        # Check if node is a member of iterated group
+        group_nodes.push(node['name']) if nodegroup == group
+      end
+      populated_ansible_groups[group] = group_nodes
     end
+  end
 
-    config.vm.define "manager" do |i|
-      i.vm.box = "bento/centos-7.6"
-      i.vm.hostname = "manager"
-      i.vm.network "private_network", ip: "#{manager_ip}"
-      i.vm.provision "shell", inline: $etcd1_script, privileged: false
-      if File.file?("./hosts")
-        i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
-        i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+  # Dynamic Ansible Groups iterated from nodes.yml
+  ansible_groups = populated_ansible_groups
+
+  # Define Ansible groups statically for more control
+  # ansible_groups = {
+  #   "spines" => ["node0", "node7"],
+  #   "leafs" => ["node[1:2]", "node[8:9]"],
+  #   "quagga-routers:children" => ["spines", "leafs", "compute-nodes"],
+  #   "compute-nodes" => ["node[3:6]"],
+  #   "docker-swarm:children" => ["docker-swarm-managers", "docker-swarm-workers"],
+  #   "docker-swarm-managers" => ["node[3:4]"],
+  #   "docker-swarm-workers" => ["node[5:6]"]
+  # }
+
+  # Iterate over nodes
+  nodes.each do |node_id|
+    # Below is needed if not using Guest Additions
+    # config.vm.synced_folder ".", "/vagrant", type: "rsync",
+    #   rsync__exclude: "hosts"
+    config.vm.define node_id['name'] do |node|
+      unless node_id['synced_folder'].nil?
+        unless node_id['synced_folder']['type'].nil?
+          config.vm.synced_folder '.', '/vagrant', type: node_id['synced_folder']['type']
+        end
       end
-      if auto
-        i.vm.provision "shell", inline: "docker swarm init --advertise-addr #{manager_ip}"
-        i.vm.provision "shell", inline: "ls -lai /vagrant"
-        i.vm.provision "shell", inline: "docker swarm join-token -q worker >> /vagrant/token"
-        i.vm.provision "shell", inline: "cat /vagrant/token"
-        i.vm.provision "shell", inline: "docker swarm join-token -q manager >> /vagrant/manager_token"
-        i.vm.provision "shell", inline: "cat /vagrant/manager_token"
-        i.vm.provision "shell", inline: "ls -lai /vagrant"
+      node.vm.box = node_id['box']
+      node.vm.hostname = node_id['name']
+      node.vm.provider 'virtualbox' do |vb|
+        vb.memory = node_id['mem']
+        vb.cpus = node_id['vcpu']
+
+        # Setup desktop environment
+        unless node_id['desktop'].nil?
+          if node_id['desktop']
+            vb.gui = true
+            vb.customize ['modifyvm', :id, '--graphicscontroller', 'vboxvga']
+            vb.customize ['modifyvm', :id, '--accelerate3d', 'on']
+            vb.customize ['modifyvm', :id, '--ioapic', 'on']
+            vb.customize ['modifyvm', :id, '--vram', '128']
+            vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
+          end
+        end
+
+        # Add additional disk(s)
+        unless node_id['disks'].nil?
+          dnum = 0
+          node_id['disks'].each do |disk_num|
+            dnum = (dnum.to_i + 1)
+            ddev = "#{node_id['name']}_Disk#{dnum}.vdi"
+            dsize = disk_num['size'].to_i * 1024
+            unless File.exist?(ddev.to_s)
+              vb.customize ['createhd', '--filename', ddev.to_s, \
+                            '--variant', 'Fixed', '--size', dsize]
+            end
+            vb.customize ['storageattach', :id, '--storagectl', \
+                          (disk_num['controller']).to_s, '--port', dnum, '--device', 0, \
+                          '--type', 'hdd', '--medium', ddev.to_s]
+          end
+        end
+      end
+
+      # Provision network interfaces
+      unless node_id['interfaces'].nil?
+        node_id['interfaces'].each do |int|
+          if int['method'] == 'dhcp'
+            if int['network_name'] == 'None'
+              node.vm.network :private_network, \
+                              type: 'dhcp'
+            end
+            if int['network_name'] != 'None'
+              node.vm.network :private_network, \
+                              virtualbox__intnet: int['network_name'], \
+                              type: 'dhcp'
+            end
+          end
+          next unless int['method'] == 'static'
+          if int['network_name'] == 'None'
+            node.vm.network :private_network, \
+                            ip: int['ip'], \
+                            auto_config: int['auto_config']
+          end
+          next unless int['network_name'] != 'None'
+          node.vm.network :private_network, \
+                          virtualbox__intnet: int['network_name'], \
+                          ip: int['ip'], \
+                          auto_config: int['auto_config']
+        end
+      end
+
+      # Port Forwards
+      unless node_id['port_forwards'].nil?
+        node_id['port_forwards'].each do |pf|
+          node.vm.network :forwarded_port, \
+                          guest: pf['guest'], \
+                          host: pf['host']
+        end
+      end
+
+      # Provisioners
+      unless node_id['provision'].nil?
+        if node_id['provision']
+          # runs initial shell script
+          config.vm.provision :shell, path: 'bootstrap.sh', keep_color: 'true'
+          if node_id == num_nodes
+            node.vm.provision 'ansible' do |ansible|
+              ansible.limit = 'all'
+              # runs bootstrap Ansible playbook
+              ansible.playbook = 'bootstrap.yml'
+            end
+            node.vm.provision 'ansible' do |ansible|
+              ansible.limit = 'all'
+              # runs Ansible playbook for installing roles/executing tasks
+              ansible.playbook = 'playbook.yml'
+              ansible.groups = ansible_groups
+            end
+          end
+        end
       end
     end
-
-     if multi_manager == true
-        nummanagers = 1 # of extra managers
-        instances_managers = []
-
-        (1..nummanagers).each do |m|
-          instances_managers.push({:name => "manager#{m}", :ip => "192.168.10.#{m+2}"})
-        end # (1..nummanagers)
-        # File.open("./hosts", 'w') { |file|
-        File.open('./hosts', 'a'){ |file|
-          instances_managers.each do |i|
-            file.write("#{i[:ip]} #{i[:name]}.local #{i[:name]}\n")
-          end
-        } # File.open("./hosts", 'w')
-
-        instances_managers.each do |instancemgr|
-                config.vm.define instancemgr[:name] do |i|
-                  i.vm.box = "bento/centos-7.6"
-                  i.vm.hostname = instancemgr[:name]
-                  i.vm.network "private_network", ip: "#{instancemgr[:ip]}"
-                  i.vm.provision "shell", inline: $etcd1_script, privileged: false
-
-                  if File.file?("./hosts")
-                    i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
-                    i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
-                  end # if File.file?("./hosts")
-
-                  if auto
-                      i.vm.provision "shell", inline: "cat /vagrant/manager_token"
-                      i.vm.provision "shell", inline: "docker swarm join --token `cat /vagrant/manager_token` #{manager_ip}:2377"
-                  end # if auto
-
-                end
-        end # instances_managers.eac
-     end # if multi_manager
-
-
-      instances.each do |instance|
-      config.vm.define instance[:name] do |i|
-        i.vm.box = "bento/centos-7.6"
-        i.vm.hostname = instance[:name]
-        i.vm.network "private_network", ip: "#{instance[:ip]}"
-        i.vm.provision "shell", inline: $etcd1_script, privileged: false
-          if File.file?("./hosts")
-            i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
-            i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
-          end
-          if auto
-            i.vm.provision "shell", inline: "cat /vagrant/token"
-            i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
-          end
-      end
-     end
-
+  end
 end

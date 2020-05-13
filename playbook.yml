@@ -1,0 +1,12 @@
+---
+- hosts: all
+  roles:
+    - role: ansible-etc-hosts
+
+- hosts: docker-nodes
+  roles:
+    - role: ansible-docker
+
+- hosts: docker-nodes
+  roles:
+    - role: ansible-docker-swarm
