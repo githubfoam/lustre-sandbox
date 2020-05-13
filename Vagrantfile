@@ -152,12 +152,12 @@ Vagrant.configure(2) do |config|
           config.vm.provision :shell, path: 'bootstrap.sh', keep_color: 'true'
           if node_id == num_nodes
             node.vm.provision 'ansible' do |ansible|
-              ansible.limit = 'all'
+              # ansible.limit = 'all'
               # runs bootstrap Ansible playbook
               ansible.playbook = 'bootstrap.yml'
             end
             node.vm.provision 'ansible' do |ansible|
-              ansible.limit = 'all'
+              # ansible.limit = 'all'
               # runs Ansible playbook for installing roles/executing tasks
               ansible.playbook = 'playbook.yml'
               ansible.compatibility_mode = "2.0"
