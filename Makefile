@@ -3,7 +3,7 @@
 up: vagrant playbook
 
 vagrant:
-	@vagrant up --provider=libvirt
+	@vagrant up
 	@vagrant ssh-config > ssh.config
 
 playbook:

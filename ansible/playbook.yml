@@ -1,5 +1,0 @@
-- name: "Provision Docker Swarm Cluster"
-  hosts: all
-  remote_user: vagrant
-  roles:
-     - { role: ansible-dockerswarm }

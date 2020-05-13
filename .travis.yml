@@ -33,17 +33,17 @@ jobs:
           # - sudo vagrant plugin install vagrant-vbguest #https://docs.openstack.org/developer/dragonflow/installation.html
           - sudo vagrant status
           - sudo virsh list --all #show all running KVM/libvirt VMs
-          - sudo vagrant box add "centos/7"
-          # - sudo vagrant mutate "coreos-stable" libvirt
+          - sudo vagrant box add "debian/stretch64"
+          - sudo vagrant mutate "debian/stretch64" libvirt
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
-          # - sudo vagrant up --provider=libvirt vg-irods01
+          - sudo vagrant up --provider=libvirt master node1 node2
           # - sudo vagrant up --no-parallel --provider=libvirt # vagrant serial runs
           # - travis_wait 30 sudo vagrant up --provider=libvirt
-          - sudo vagrant up
+          # - sudo vagrant up
           - sudo vagrant status
           - sudo vagrant global-status
-          # - sudo vagrant ssh node0 -c "docker node ls"
+          - sudo vagrant ssh master -c "docker node ls"
           - sudo virsh list --all #show all running KVM/libvirt VMs
 after_success:
     - stage: Finalize
