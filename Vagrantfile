@@ -160,6 +160,8 @@ Vagrant.configure(2) do |config|
               ansible.limit = 'all'
               # runs Ansible playbook for installing roles/executing tasks
               ansible.playbook = 'playbook.yml'
+              ansible.compatibility_mode = "2.0"
+              ansible.version = "2.8.5"
               ansible.groups = ansible_groups
             end
           end
