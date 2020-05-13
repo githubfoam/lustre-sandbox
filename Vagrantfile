@@ -1,317 +1,140 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+$etcd1_script = <<SCRIPT
+# Get Docker Engine - Community for CentOS
+# https://docs.docker.com/install/linux/docker-ce/centos/
+sudo yum remove docker \
+docker-client \
+docker-client-latest \
+docker-common \
+docker-latest \
+docker-latest-logrotate \
+docker-logrotate \
+docker-engine
+sudo yum install -y yum-utils \
+device-mapper-persistent-data \
+lvm2
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+# sudo yum install -y docker-ce \
+# docker-ce-cli \
+# containerd.io
+sudo yum install -y docker-ce-19.03.2 \
+docker-ce-cli-19.03.2 \
+containerd.io
+sudo systemctl enable docker
+sudo systemctl start docker && sudo docker --version
+# sudo groupadd docker
+sudo usermod -aG docker vagrant # add user to the docker group
+# Install Docker Compose
+# https://docs.docker.com/compose/install/
+# sudo curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+# sudo docker-compose --version
+docker --version
+hostnamectl status
+SCRIPT
+auto = ENV['AUTO_START_SWARM'] || true # create swarm auto mode
+multi_manager =  true # create swarm multi manager mode
+numworkers = 2
+vmmemory = 512
+# Increase numcpu if you want more cpu's per vm
+numcpu = 1
+instances = []
+(1..numworkers).each do |n|
+  instances.push({:name => "worker#{n}", :ip => "192.168.10.2#{n+2}"})
+end
+
+manager_ip = "192.168.10.2"
+
+File.open("./hosts", 'w') { |file|
+  instances.each do |i|
+    file.write("#{i[:ip]} #{i[:name]}.local #{i[:name]}\n")
+  end
+  file.write("#{manager_ip} manager.local manager\n")
+}
+
+
+# Vagrant version requirement
+Vagrant.require_version ">= 1.8.4"
+
 Vagrant.configure("2") do |config|
 
-	# Set the default RAM allocation for each VM.
-	# 1GB is sufficient for demo and training purposes.
-	# Admin and builder servers are allocated 2GB and 4GB RAM
-	# respectively. Refer to the VM definitions to change.
-	config.vm.provider "virtualbox" do |vbx|
-		vbx.memory = 1024
-	end
+    config.vm.provider "virtualbox" do |v|
+     	v.memory = vmmemory
+  	  v.cpus = numcpu
+      v.customize ["modifyvm", :id, "--groups", "/swarm-centos-sandbox"] # create vbox group
+    end
 
-	# Directory root for additional vdisks for MGT, MDT0, and OSTs
-	vdisk_root = "#{ENV['HOME']}/VirtualBox\ VMs/vdisks"
-	# Number of shared disk devices per OSS server pair
-	sdnum=8
-	# Use pre-built box from CentOS project
-	config.vm.box = "centos/7"
+    config.vm.define "manager" do |i|
+      i.vm.box = "bento/centos-7.6"
+      i.vm.hostname = "manager"
+      i.vm.network "private_network", ip: "#{manager_ip}"
+      i.vm.provision "shell", inline: $etcd1_script, privileged: false
+      if File.file?("./hosts")
+        i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
+        i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+      end
+      if auto
+        i.vm.provision "shell", inline: "docker swarm init --advertise-addr #{manager_ip}"
+        i.vm.provision "shell", inline: "docker swarm join-token -q worker > /vagrant/token"
+        i.vm.provision "shell", inline: "docker swarm join-token -q manager > /vagrant/manager_token"
+      end
+    end
 
-	# Hostname prefix for the cluster nodes
-	# Example conventions:
-	# ct<vmax><vmin>: CentOS <vmax>.<vmin>, e.g. ct73 = CentOS 7.3
-	# rh<vmax><vmin>: RHEL <vmax>.<vmin>, e.g. rh73 = RHEL 7.3
-	# el<vmax><vmin>: Generic RHEL derivative <vmax>.<vmin>,
-	# 	e.g. el73 = RHEL/CentOS 7.3
-	# el<vmax>: Generic RHEL derivative <vmax>, e.g. el7 = RHEL/CentOS 7.x
-	# sl<vmax><vmin>: SLES <vmax> SP<vmin>, e.g. sl121 = SLES 12 sp1
-	# ub<vmax><vmin>: Ubuntu <vmax>.<vmin>, e.g. ub1604 = Ubuntu 16.04
-	#
-	# Each host in the virtual cluster will be automatically assigned
-	# a name based on the prefix and the function of the host
-	# The following examples are nodes running CentOS 7.3:
-	# ct73-mds1 = 1st metadata server
-	# ct73-oss3 = 3rd OSS
-	# ct73-c2 = 2nd compute node
-	host_prefix="ct7"
-	# Create a set of /24 networks under a single /16 subnet range
-	subnet_prefix="10.73"
-	# Management network for admin comms
-	mgmt_net_pfx="#{subnet_prefix}.10"
-	# Lustre / HPC network
-	lnet_pfx="#{subnet_prefix}.20"
-	# Subnet index used to create cross-over nets for each HA cluster pair
-	xnet_idx=230
+     if multi_manager == true
+        nummanagers = 1 # of extra managers
+        instances_managers = []
 
-	# Create a basic hosts file for the VMs.
-	open('hosts', 'w') { |f|
-	f.puts <<-__EOF
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
-::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+        (1..nummanagers).each do |m|
+          instances_managers.push({:name => "manager#{m}", :ip => "192.168.10.#{m+2}"})
+        end # (1..nummanagers)
+        # File.open("./hosts", 'w') { |file|
+        File.open('./hosts', 'a'){ |file|
+          instances_managers.each do |i|
+            file.write("#{i[:ip]} #{i[:name]}.local #{i[:name]}\n")
+          end
+        } # File.open("./hosts", 'w')
 
-#{mgmt_net_pfx}.9 #{host_prefix}-b.lfs.local #{host_prefix}-b
-#{mgmt_net_pfx}.10 #{host_prefix}-adm.lfs.local #{host_prefix}-adm
-#{mgmt_net_pfx}.11 #{host_prefix}-mds1.lfs.local #{host_prefix}-mds1
-#{mgmt_net_pfx}.12 #{host_prefix}-mds2.lfs.local #{host_prefix}-mds2
-#{mgmt_net_pfx}.21 #{host_prefix}-oss1.lfs.local #{host_prefix}-oss1
-#{mgmt_net_pfx}.22 #{host_prefix}-oss2.lfs.local #{host_prefix}-oss2
-#{mgmt_net_pfx}.23 #{host_prefix}-oss3.lfs.local #{host_prefix}-oss3
-#{mgmt_net_pfx}.24 #{host_prefix}-oss4.lfs.local #{host_prefix}-oss4
-__EOF
-	(1..8).each do |cidx|
-		f.puts "#{mgmt_net_pfx}.3#{cidx} #{host_prefix}-c#{cidx}.lfs.local #{host_prefix}-c#{cidx}\n"
-	end
-	}
-	config.vm.provision "shell", inline: "cp -f /vagrant/hosts /etc/hosts"
-	config.vm.provision "shell", inline: "setenforce 0; cat >/etc/selinux/config<<__EOF
-SELINUX=disabled
-SELINUXTYPE=targeted
-__EOF"
+        instances_managers.each do |instancemgr|
+                config.vm.define instancemgr[:name] do |i|
+                  i.vm.box = "bento/centos-7.6"
+                  i.vm.hostname = instancemgr[:name]
+                  i.vm.network "private_network", ip: "#{instancemgr[:ip]}"
+                  i.vm.provision "shell", inline: $etcd1_script, privileged: false
 
-	# A simple way to create a key that can be used to enable
-	# SSH between the virtual guests.
-	#
-	# The private key is copied onto the root account of the
-	# administration node and the public key is appended to the
-	# authorized_keys file of the root account for all nodes
-	# in the cluster.
-	#
-	# Shelling out may not be the most Vagrant-friendly means to
-	# create this key but it avoids more complex methods such as
-	# developing a plugin.
-	#
-	# Popen may be a more secure way to exec but is more code
-	# for what is, in this case, a relatively small gain.
-	if not(File.exist?("id_rsa"))
-		res = system("ssh-keygen -t rsa -N '' -f id_rsa")
-	end
+                  if File.file?("./hosts")
+                    i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
+                    i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+                  end # if File.file?("./hosts")
 
-	# Add the generated SSH public key to each host's
-	# authorized_keys file.
-	config.vm.provision "shell", inline: "mkdir -m 0700 -p /root/.ssh; [ -f /vagrant/id_rsa.pub ] && (awk -v pk=\"`cat /vagrant/id_rsa.pub`\" 'BEGIN{split(pk,s,\" \")} $2 == s[2] {m=1;exit}END{if (m==0)print pk}' /root/.ssh/authorized_keys )>> /root/.ssh/authorized_keys; chmod 0600 /root/.ssh/authorized_keys"
+                  if auto
+                      i.vm.provision "shell", inline: "docker swarm join --token `cat /vagrant/manager_token` #{manager_ip}:2377"
+                  end # if auto
+
+                end
+        end # instances_managers.eac
+     end # if multi_manager
 
 
-	#
-	# Create an admin server for the cluster
-	#
-	config.vm.define "adm", primary: true do |adm|
-		adm.vm.provider "virtualbox" do |v|
-			v.memory = 2048
-		end
-		adm.vm.host_name = "#{host_prefix}-adm.lfs.local"
-		adm.vm.network "forwarded_port", guest: 443, host: 8443
-		# Admin / management network
-		adm.vm.network "private_network",
-			ip: "#{mgmt_net_pfx}.10",
-			netmask: "255.255.255.0"
-		adm.vm.provision "shell", inline: "mkdir -m 0700 -p /root/.ssh; cp /vagrant/id_rsa /root/.ssh/.; chmod 0600 /root/.ssh/id_rsa"
-	end
+      instances.each do |instance|
+      config.vm.define instance[:name] do |i|
+        i.vm.box = "bento/centos-7.6"
+        i.vm.hostname = instance[:name]
+        i.vm.network "private_network", ip: "#{instance[:ip]}"
+        i.vm.provision "shell", inline: $etcd1_script, privileged: false
+          if File.file?("./hosts")
+            i.vm.provision "file", source: "hosts", destination: "/tmp/hosts"
+            i.vm.provision "shell", inline: "cat /tmp/hosts >> /etc/hosts", privileged: true
+          end
+          if auto
+            i.vm.provision "shell", inline: "docker swarm join --advertise-addr #{instance[:ip]} --listen-addr #{instance[:ip]}:2377 --token `cat /vagrant/token` #{manager_ip}:2377"
+          end
+      end
+     end
 
-	#
-	# Create the metadata servers (HA pair)
-	#
-	(1..2).each do |mds_idx|
-		config.vm.define "mds#{mds_idx}" do |mds|
-			# Create additional storage to be shared between
-			# the metadata server VMs.
-			# Storage services associated with these #{vdisk_root}
-			# will be maintained using HA failover.
-			mds.vm.provider "virtualbox" do |vbx|
-				if mds_idx==1 && not(File.exist?("#{vdisk_root}/mgs.vdi"))
-					vbx.customize ["createmedium", "disk",
-						"--filename", "#{vdisk_root}/mgs.vdi",
-						"--size", "512",
-						"--format", "VDI",
-						"--variant", "fixed"]
-				end
-				if mds_idx==1 && not(File.exist?("#{vdisk_root}/mdt0.vdi"))
-                			vbx.customize ["createmedium", "disk",
-						"--filename", "#{vdisk_root}/mdt0.vdi",
-						"--size", "5120",
-						"--format", "VDI",
-						"--variant", "fixed"]
-				end
-				# Add a storage controller to each VM.
-				# SATA chosen because when VM is booted, disks attached
-				# to SAS and SCSI don't show up in /dev/disk/by-id.
-				# Appears to be a bug / limitation in VBox.
-				#
-				# Primitive check to see whether or not the
-				# storage has been provisioned previously.
-				# Needed because the vbx.customize...storagectl
-				# command is not idempotent and will fail if the
-				# controller has been created already.
-				#
-				# Also, cannot catch the exception that gets
-				# raised, as it is handled by the
-				# VirtualBox.customize method itself.
-				#
-				# Cannot suppress error or continue if exception
-				# is raised. No workarounds that would be portable
-				# or easy to maintain.
-				#
-				# Does not seem to affect storageattach.
-				if not(File.exist?("#{vdisk_root}/mgs.vdi"))
-					vbx.customize ["storagectl", :id,
-						"--name", "SATAController",
-						"--add", "sata"]
-				end
-				vbx.customize ["storageattach", :id,
-					"--storagectl", "SATAController",
-					"--port", "0",
-					"--type", "hdd",
-					"--medium", "#{vdisk_root}/mgs.vdi",
-					"--mtype", "shareable",
-					"--device", "0"]
-				vbx.customize ["storageattach", :id,
-					"--storagectl", "SATAController",
-					"--port", "1",
-					"--type", "hdd",
-					"--medium", "#{vdisk_root}/mdt0.vdi",
-					"--mtype", "shareable",
-					"--device", "0"]
-			end
-			# Set host name of VM
-			mds.vm.host_name = "#{host_prefix}-mds#{mds_idx}.lfs.local"
-			# Admin / management network
-			mds.vm.network "private_network",
-				ip: "#{mgmt_net_pfx}.1#{mds_idx}",
-				netmask: "255.255.255.0"
-			# Lustre / application network
-			mds.vm.network "private_network",
-				ip: "#{lnet_pfx}.1#{mds_idx}",
-				netmask: "255.255.255.0"
-			# Private network to simulate crossover.
-			# Used exclusively as additional cluster network
-			mds.vm.network "private_network",
-				ip: "#{subnet_prefix}.#{xnet_idx}.1#{mds_idx}",
-				netmask: "255.255.255.0"
-			# Increment the "crossover" subnet number so that
-			# each HA pair has a unique "crossover" subnet
-			if mds_idx % 2 == 0
-				xnet_idx+=1
-			end
-		end
-	end
-
-	#
-	# Create the object storage servers (OSS)
-	# Servers are configured in HA pairs
-	# By default, only the first 2 nodes are created
-	# To instantiate oss3 and oss4, use this command:
-	# 	vagrant up oss{3,4}
-	#
-	(1..4).each do |oss_idx|
-		config.vm.define "oss#{oss_idx}",
-			autostart: (oss_idx>2 ? false : true) do |oss|
-
-			# Create additional storage to be shared between
-			# the object storage server VMs.
-			# Storage services associated with these #{vdisk_root}
-			# will be maintained using HA failover.
-			oss.vm.provider "virtualbox" do |vbx|
-				# Set the OST index range based on the node number.
-				# Each OSS is one of a pair, and will share these devices
-				# Equation assumes that OSSs are allocated in pairs with
-				# consecutive numbering. Each pair of servers has a set
-				# of shared virtual disks (vdisks) numbered in the range
-				# osd_min to osd_max. e.g.:
-				# oss{1,2} share OST0..OST7 and oss{3,4} share OST8..OST16,
-				# assuming the number of disks per pair (sdnum) is 8
-				osd_min = ((oss_idx-1) / 2) * sdnum
-				osd_max = osd_min + 7
-				# Create the virtual disks for the OSTs
-				# Only create the vdisks on odd-numbered VMs
-				# (node 1 in each HA pair)
-				if oss_idx % 2 == 1
-					(osd_min..osd_max).each do |ost|
-				 		if not(File.exist?("#{vdisk_root}/ost#{ost}.vdi"))
-							vbx.customize ["createmedium", "disk",
-								"--filename", "#{vdisk_root}/ost#{ost}.vdi",
-								"--size", "5120",
-								"--format", "VDI",
-								"--variant", "fixed"
-								]
-						end
-					end
-				end
-				# Add a storage controller to each VM.
-				# SATA chosen because when VM is booted, disks attached
-				# to SAS and SCSI don't show up in /dev/disk/by-id.
-				# Appears to be a bug / limitation in VBox.
-				#
-				# Primitive check to see whether or not the
-				# storage has been provisioned previously.
-				# Needed because the vbx.customize...storagectl
-				# command is not idempotent and will fail if the
-				# controller has been created already.
-				if not(File.exist?("#{vdisk_root}/ost#{osd_min}.vdi"))
-					vbx.customize ["storagectl", :id,
-						"--name", "SATAController",
-						"--add", "sata"
-						]
-				end
-
-				# Attach the vdisks to each OSS in the pair
-				(osd_min..osd_max).each do |osd|
-					pnum = osd % sdnum
-					vbx.customize ["storageattach", :id,
-						"--storagectl", "SATAController",
-						"--port", "#{pnum}",
-						"--type", "hdd",
-						"--medium", "#{vdisk_root}/ost#{osd}.vdi",
-						"--mtype", "shareable",
-						"--comment","%sOST%04d" % [host_prefix.upcase, osd]
-						]
-				end
-			end
-
-			oss.vm.host_name = "#{host_prefix}-oss#{oss_idx}.lfs.local"
-			# Admin / management network
-			oss.vm.network "private_network",
-				ip: "#{mgmt_net_pfx}.2#{oss_idx}",
-				netmask: "255.255.255.0"
-			# Lustre / application network
-			oss.vm.network "private_network",
-				ip: "#{lnet_pfx}.2#{oss_idx}",
-				netmask: "255.255.255.0"
-			# Private network to simulate crossover.
-			# Used exclusively as additional cluster network
-			oss.vm.network "private_network",
-				ip: "#{subnet_prefix}.#{xnet_idx}.2#{oss_idx}",
-				netmask: "255.255.255.0"
-
-			# Increment the "crossover" subnet number so that
-			# each HA pair has a unique "crossover" subnet
-			if oss_idx % 2 == 0
-				xnet_idx+=1
-			end
-		end
-	end
-
-	# Create a set of compute nodes.
-	# By default, only 2 compute nodes are created.
-	# The configuration supports a maximum of 8 compute nodes.
-	(1..8).each do |c_idx|
-		config.vm.define "c#{c_idx}",
-			autostart: (c_idx>2 ? false : true) do |c|
-			c.vm.host_name = "#{host_prefix}-c#{c_idx}.lfs.local"
-			# Admin / management network
-			c.vm.network "private_network",
-				ip: "#{mgmt_net_pfx}.3#{c_idx}",
-				netmask: "255.255.255.0"
-			# Lustre / application network
-			c.vm.network "private_network",
-				ip: "#{lnet_pfx}.3#{c_idx}",
-				netmask: "255.255.255.0"
-				c.vm.provision "shell", inline: <<-SHELL
-				echo "===================================================================================="
-																	hostnamectl status
-				echo "===================================================================================="
-				echo "         \   ^__^                                                                  "
-				echo "          \  (oo)\_______                                                          "
-				echo "             (__)\       )\/\                                                      "
-				echo "                 ||----w |                                                         "
-				echo "                 ||     ||                                                         "
-				SHELL
-		end
-	end
 end
