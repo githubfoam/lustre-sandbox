@@ -9,7 +9,8 @@ Vagrant.configure("2") do |config|
     master.vm.provider "virtualbox" do |vb|
         vb.memory = "4096"
     end
-    master.vm.provision "ansible/master", type: "ansible" do |ansible|
+    # master.vm.provision "ansible/master", type: "ansible" do |ansible|
+    master.vm.provision "ansible/master", type: "ansible_local" do |ansible|
         ansible.playbook = "ansible/provision-master.yml"
         ansible.compatibility_mode = "2.0"
         ansible.version = "2.8.5"
@@ -29,7 +30,8 @@ Vagrant.configure("2") do |config|
     node1.vm.provider "virtualbox" do |vb|
         vb.memory = "4096"
     end
-    node1.vm.provision "ansible/node1", type: "ansible" do |ansible|
+    # node1.vm.provision "ansible/node1", type: "ansible" do |ansible|
+    node1.vm.provision "ansible/node1", type: "ansible_local" do |ansible|
         ansible.playbook = "ansible/provision-node.yml"
         ansible.compatibility_mode = "2.0"
         ansible.version = "2.8.5"
@@ -50,10 +52,11 @@ Vagrant.configure("2") do |config|
     node2.vm.provider "virtualbox" do |vb|
         vb.memory = "4096"
     end
-    node2.vm.provision "ansible/node2", type: "ansible" do |ansible|
+    # node2.vm.provision "ansible/node2", type: "ansible" do |ansible|
+    node2.vm.provision "ansible/node1", type: "ansible_local" do |ansible|    
         ansible.playbook = "ansible/provision-node.yml"
         ansible.compatibility_mode = "2.0"
-        ansible.version = "2.8.5"        
+        ansible.version = "2.8.5"
         ansible.verbose = "v"
         ansible.extra_vars = {
             "target" => "node2",
