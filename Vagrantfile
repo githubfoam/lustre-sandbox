@@ -2,13 +2,14 @@
 # vi: set ft=ruby :
 
 Vagrant.configure(2) do |config|
-  if (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
-    # config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=700,fmode=600"], type: "virtualbox"
-    config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=700,fmode=600"], type: "libvirt"
-  else
-    # config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
-    config.vm.synced_folder ".", "/vagrant", type: "libvirt"
-  end
+
+  # if (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
+  #   # config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=700,fmode=600"], type: "virtualbox"
+  #   config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=700,fmode=600"], type: "libvirt"
+  # else
+  #   # config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+  #   config.vm.synced_folder ".", "/vagrant", type: "libvirt"
+  # end
 
   (1..3).each do |i|
     config.vm.define "swarm-worker-0#{i}" do |d|
