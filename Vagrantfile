@@ -85,7 +85,9 @@ Vagrant.configure("2") do |config|
       if auto
         i.vm.provision "shell", inline: "docker swarm init --advertise-addr #{manager_ip}"
         i.vm.provision "shell", inline: "docker swarm join-token -q worker > /vagrant/token"
+        i.vm.provision "shell", inline: "cat /vagrant/token"
         i.vm.provision "shell", inline: "docker swarm join-token -q manager > /vagrant/manager_token"
+        i.vm.provision "shell", inline: "cat /vagrant/manager_token"
       end
     end
 
