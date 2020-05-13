@@ -7,10 +7,12 @@ Vagrant.configure("2") do |config|
     master.vm.hostname = "master"
     master.vm.network "private_network", ip: "172.16.1.11"
     master.vm.provider "virtualbox" do |vb|
-        vb.memory = "2048"
+        vb.memory = "4096"
     end
     master.vm.provision "ansible/master", type: "ansible" do |ansible|
         ansible.playbook = "ansible/provision-master.yml"
+        ansible.compatibility_mode = "2.0"
+        ansible.version = "2.8.5"
         ansible.verbose = "v"
         ansible.extra_vars = {
             "target" => "master",
@@ -25,10 +27,12 @@ Vagrant.configure("2") do |config|
     node1.vm.hostname = "node1"
     node1.vm.network "private_network", ip: "172.16.1.12"
     node1.vm.provider "virtualbox" do |vb|
-        vb.memory = "2048"
+        vb.memory = "4096"
     end
     node1.vm.provision "ansible/node1", type: "ansible" do |ansible|
         ansible.playbook = "ansible/provision-node.yml"
+        ansible.compatibility_mode = "2.0"
+        ansible.version = "2.8.5"
         ansible.verbose = "v"
         ansible.extra_vars = {
             "target" => "node1",
@@ -44,10 +48,12 @@ Vagrant.configure("2") do |config|
     node2.vm.hostname = "node2"
     node2.vm.network "private_network", ip: "172.16.1.13"
     node2.vm.provider "virtualbox" do |vb|
-        vb.memory = "2048"
+        vb.memory = "4096"
     end
     node2.vm.provision "ansible/node2", type: "ansible" do |ansible|
         ansible.playbook = "ansible/provision-node.yml"
+        ansible.compatibility_mode = "2.0"
+        ansible.version = "2.8.5"        
         ansible.verbose = "v"
         ansible.extra_vars = {
             "target" => "node2",
