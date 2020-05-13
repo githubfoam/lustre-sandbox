@@ -33,8 +33,8 @@ jobs:
           # - sudo vagrant plugin install vagrant-vbguest #https://docs.openstack.org/developer/dragonflow/installation.html
           - sudo vagrant status
           - sudo virsh list --all #show all running KVM/libvirt VMs
-          - sudo vagrant box add "bento/ubuntu-16.04"
-          - sudo vagrant mutate "bento/ubuntu-16.04" libvirt
+          - sudo vagrant box add "bento/ubuntu-19.10"
+          - sudo vagrant mutate "bento/ubuntu-19.10" libvirt
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
           # - sudo vagrant up --provider=libvirt vg-irods01
