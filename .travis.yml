@@ -38,15 +38,15 @@ jobs:
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
           # - sudo vagrant up --provider=libvirt vg-irods01
-          # - sudo vagrant up --no-parallel --provider=libvirt
+          - sudo vagrant up --no-parallel --provider=libvirt # vagrant serial runs
           # - travis_wait 30 sudo vagrant up --provider=libvirt
-          - sudo vagrant up --provider=libvirt manager
-          - sudo vagrant up --provider=libvirt manager1
-          - sudo vagrant up --provider=libvirt worker1
-          - sudo vagrant up --provider=libvirt worker2
+          # - sudo vagrant up --provider=libvirt manager
+          # - sudo vagrant up --provider=libvirt manager1
+          # - sudo vagrant up --provider=libvirt worker1
+          # - sudo vagrant up --provider=libvirt worker2
           - sudo vagrant status
           - sudo vagrant global-status
-          # - sudo vagrant ssh devstack_controller -c "hostnamectl status"
+          - sudo vagrant ssh manager -c "docker node ls"
           - sudo virsh list --all #show all running KVM/libvirt VMs
 after_success:
     - stage: Finalize
