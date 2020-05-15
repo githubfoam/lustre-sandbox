@@ -55,6 +55,13 @@
         command: docker swarm join-token --quiet worker
         register: join
 
+      - name: "Debug join command"
+        debug:
+            var: join
+      - name: "Debug stdout join command"
+        debug:
+            var: join.stdout
+
       - name: Copy join command to local file
         become: no
         local_action: copy content={{ join.stdout }} dest={{ join_file }}

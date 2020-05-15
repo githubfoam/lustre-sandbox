@@ -18,7 +18,8 @@ Vagrant.configure("2") do |config|
         ansible.extra_vars = {
             "target" => "master",
             "master_ip" => "172.16.1.11",
-            "join_file" => "join.txt"
+            # "join_file" => "join.txt"
+            "join_file" => "/tmp/join.txt"
         }
     end
   end
