@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # https://github.com/ComplianceAsCode/demo#Install-the-test-VM
+dnf install git -y
 git clone https://github.com/ComplianceAsCode/demo.git
 git clone https://github.com/ComplianceAsCode/content.git
 cd content
