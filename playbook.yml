@@ -3,10 +3,10 @@
   roles:
     - role: ansible-etc-hosts
 
-- hosts: docker-nodes
-  roles:
-    - role: ansible-docker
-
-- hosts: docker-nodes
-  roles:
-    - role: ansible-docker-swarm
+# - hosts: docker-nodes
+#   roles:
+#     - role: ansible-docker
+#
+# - hosts: docker-nodes
+#   roles:
+#     - role: ansible-docker-swarm
