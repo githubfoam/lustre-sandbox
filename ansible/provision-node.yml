@@ -18,7 +18,7 @@
 
       - name: Add docker apt repository key
         apt_key:
-            url: https://download.docker.com/linux/debian/gpg   
+            url: https://download.docker.com/linux/debian/gpg
             state: present
 
       - name: Add docker apt repository
@@ -52,8 +52,14 @@
             dest: "/tmp/{{ join_file }}"
             mode: 0777
 
-      - name: Copy token value to variable
-        command: "cat {{ join_file }}"
+      # - name: Copy token value to variable
+      #   command: "cat {{ join_file }}"
+      #   args:
+      #       chdir: /tmp
+      #   register: token
+
+      - name: "Copy token value to variable"
+        command: "cat {{ join_command.stdout }}"
         args:
             chdir: /tmp
         register: token
