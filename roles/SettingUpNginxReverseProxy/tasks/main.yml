@@ -1,0 +1,41 @@
+- name: install certbot-nginx nginx
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - certbot-nginx
+    - nginx
+
+- name: create /etc/nginx/conf.d/concourse-ssl.conf
+  template:
+    src: concourse-ssl.conf.j2
+    dest: /etc/nginx/conf.d/concourse-ssl.conf
+- name: mkdir
+  file:
+    path: /etc/pki/tls/local
+    state: directory
+- name: cert
+  shell: openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout /etc/pki/tls/local/example.key -out /etc/pki/tls/local/example.crt -extensions san -config <(echo "[req]"; echo distinguished_name=req; echo "[san]"; echo subjectAltName=DNS:example.com,DNS:example.net,IP:{{ansible_default_ipv4.address}}) -subj /CN=example.com
+
+- name: start and enable nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+- name: start and enable nginx
+  service:
+    name: nginx
+    state: restarted
+- name: create template for environment  web.env
+  template:
+    src: web.env.j2
+    dest: /opt/concourse/web.env
+    mode: 0600
+- name: start and enable nginx
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - concourse-web
+    - concourse-worker
+    - nginx

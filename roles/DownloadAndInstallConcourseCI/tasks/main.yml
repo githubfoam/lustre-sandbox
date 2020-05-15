@@ -1,0 +1,10 @@
+- name: Download concourse_linux_amd64 v4.2.2
+  get_url:
+    url: https://github.com/concourse/concourse/releases/download/v4.2.2/concourse_linux_amd64
+    dest: /usr/bin/concourse
+    mode: 0740
+- name: Download fly_linux_amd64 v4.2.2
+  get_url:
+    url: https://github.com/concourse/concourse/releases/download/v4.2.2/fly_linux_amd64
+    dest: /usr/bin/fly
+    mode: 0740

@@ -1,0 +1,41 @@
+- debug:
+   msg: "{{ ansible_default_ipv4.address }}"
+- name: create template for environment  web.env
+  template:
+    src: web.env.j2
+    dest: /opt/concourse/web.env
+    mode: 0600
+- name: create template for environment worker.env
+  template:
+    src: worker.env.j2
+    dest: /opt/concourse/worker.env
+    mode: 0600
+- name: add user concourse
+  shell: adduser --system concourse
+  ignore_errors: yes
+- name: change /opt/concourse owner and group to concourse recurse
+  file:
+    path: /opt/concourse
+    owner: concourse
+    group: concourse
+    recurse: yes
+- name: create /etc/systemd/system/concourse-worker.service
+  template:
+    src: concourse-worker.service.j2
+    dest: /etc/systemd/system/concourse-worker.service
+- name: create /etc/systemd/system/concourse-web.service
+  template:
+    src: concourse-web.service.j2
+    dest: /etc/systemd/system/concourse-web.service
+- name: reload daemon
+  shell: systemctl daemon-reload
+- name: remove temp
+  shell: sudo rm -rf /tmp/*
+- name: start and enable concourse-web concourse-worker
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - concourse-web
+    - concourse-worker

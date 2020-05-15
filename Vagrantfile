@@ -23,9 +23,9 @@ Vagrant.configure(2) do |config|
   #   end
   # end
 
-  config.vm.define "concourseci" do |d|
+  config.vm.define "concourseCi" do |d|
     d.vm.box = "centos/7"
-    d.vm.hostname = "concourseci"
+    d.vm.hostname = "concourseCi"
     d.vm.network "private_network", ip: "10.100.192.200"
     # d.vm.provision :shell, path: "scripts/bootstrap_ansible.sh"
     # d.vm.provision :shell, inline: "PYTHONUNBUFFERED=1 ansible-playbook -vvv /vagrant/ansible/playbook.yml -i /vagrant/ansible/hosts/swarm"
@@ -34,7 +34,7 @@ Vagrant.configure(2) do |config|
       v.memory = 4096
     end
     d.vm.provision "ansible_local" do |ansible|
-    ansible.playbook = "ansible/playbook.yml"
+    ansible.playbook = "playbook.yml"
     ansible.become = true
     ansible.compatibility_mode = "2.0"
     ansible.version = "2.8.5"

@@ -1,0 +1,12 @@
+- name: Create a new directory /opt/concourse
+  file:
+    path: /opt/concourse
+    state: directory
+- name: ssh-keygen in actions
+  shell:  yes y | ssh-keygen -t rsa -q -N '' -f {{ item }}
+  with_items:
+    - /opt/concourse/session_signing_key
+    - /opt/concourse/tsa_host_key
+    - /opt/concourse/worker_key
+- name: cp /opt/concourse/worker_key.pub /opt/concourse/authorized_worker_keys
+  shell: cp /opt/concourse/worker_key.pub /opt/concourse/authorized_worker_keys

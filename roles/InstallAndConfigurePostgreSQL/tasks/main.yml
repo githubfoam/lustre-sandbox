@@ -1,0 +1,48 @@
+- name: install the PostgreSQL 11 rpm from a remote repo
+  yum:
+    name: https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-centos11-11-2.noarch.rpm
+    state: present
+- name: Install postgresql11-server postgresql11-contrib packets
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - postgresql11-server
+    - postgresql11-contrib
+- name: Check if PostgreSQL database is initialized.
+  stat:
+    path: "/var/lib/pgsql/11/data/PG_VERSION"
+  register: pgdata_dir_version
+- name: initdb
+  shell: /usr/pgsql-11/bin/postgresql-11-setup initdb
+  when: not pgdata_dir_version.stat.exists
+- name: template pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: /var/lib/pgsql/11/data/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: 0600
+- name: start and enable postgres service
+  service:
+    name: postgresql-11
+    state: started
+    enabled: yes
+- debug:
+    msg: "{{ passwd_postgres }}"
+- name: easy setup password for postgres user
+  shell: echo postgres:{{ passwd_postgres }} | sudo chpasswd
+- name: Add the user 'concourse'
+  shell: createuser concourse
+  become: yes
+  become_user: postgres
+  ignore_errors: yes
+- name: add user sst_user
+  command: 'psql -c "{{ item }}"'
+  with_items:
+    - ALTER USER concourse WITH ENCRYPTED password '{{ passwd_postgres_concourse }}';
+    - CREATE DATABASE concourse OWNER concourse;
+  changed_when: False
+  become: yes
+  become_user: postgres
+  ignore_errors: yes
