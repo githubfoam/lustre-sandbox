@@ -12,7 +12,7 @@ Vagrant.configure(2) do |config|
   end
 
   # config.vm.synced_folder "airflow/", "/home/ubuntu/airflow"
-  config.vm.provision "shell", path: "bootstrap.sh"
+  # config.vm.provision "shell", path: "bootstrap.sh"
   # config.vm.provision "ansible_local" do |ansible|
   #   ansible.playbook = "playbook.yml"
   # end

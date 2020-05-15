@@ -43,6 +43,13 @@ jobs:
           - sudo vagrant up
           - sudo vagrant status
           - sudo vagrant global-status
+          - git clone https://github.com/ComplianceAsCode/demo.git
+          - git clone https://github.com/ComplianceAsCode/content.git
+          - sudo apt-get install -y openssh-clients libvirt libvirt-daemon python2-libvirt/python3-libvirt virt-install libvirt-client virt-manager virt-viewer ansible
+          - cd content
+          - cd tests
+          - python install_vm.py --domain test-suite-fedora --distro fedora
+          - ./test_suite.py profile --libvirt qemu:///session ssg_test_suite --datastream ../build/ssg-fedora-ds.xml stig
           # - sudo vagrant ssh node0 -c "docker node ls"
           - sudo virsh list --all #show all running KVM/libvirt VMs
 after_success:
