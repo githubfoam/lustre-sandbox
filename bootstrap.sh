@@ -6,7 +6,6 @@ git clone https://github.com/ComplianceAsCode/demo.git
 git clone https://github.com/ComplianceAsCode/content.git
 ls -lai
 cd content
-ls -lai
 cd tests
 ls -lai
 install_vm.py ./install_vm.py --distro fedora --domain test-suite-fedora
