@@ -1,5 +1,15 @@
-- name: "Provision Docker Swarm Cluster"
-  hosts: all
-  remote_user: vagrant
-  roles:
-     - { role: ansible-dockerswarm }
+# - name: "Provision Docker Swarm Cluster"
+#   hosts: all
+#   remote_user: vagrant
+#   roles:
+#      - { role: ansible-dockerswarm }
+---
+  - hosts: concourseCi
+    roles:
+  #=================OK============================================================
+      # - { role: Prerequisites, tags: [ 'setup' ] }
+      # - { role: InstallAndConfigurePostgreSQL, tags: [ 'setup' ] }
+      # - { role: DownloadAndInstallConcourseCI, tags: [ 'setup' ] }
+      # - { role: GenerateAndSetupRSAKeys, tags: [ 'setup' ] }
+      # - { role: ConfigureEnvironmentAndSystemdService, tags: [ 'setup' ] }
+      # - { role: SettingUpNginxReverseProxy, tags: [ 'setup' ] }

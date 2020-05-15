@@ -11,29 +11,34 @@ Vagrant.configure(2) do |config|
   #   config.vm.synced_folder ".", "/vagrant", type: "libvirt"
   # end
 
-  (1..3).each do |i|
-    config.vm.define "swarm-worker-0#{i}" do |d|
-      d.vm.box = "centos/7"
-      d.vm.hostname = "swarm-worker-0#{i}"
-      d.vm.network "private_network", ip: "10.100.192.20#{i}"
-      d.vm.provider "virtualbox" do |v|
-        # v.memory = 1024
-        v.memory = 4096
-      end
-    end
-  end
+  # (1..3).each do |i|
+  #   config.vm.define "swarm-worker-0#{i}" do |d|
+  #     d.vm.box = "centos/7"
+  #     d.vm.hostname = "swarm-worker-0#{i}"
+  #     d.vm.network "private_network", ip: "10.100.192.20#{i}"
+  #     d.vm.provider "virtualbox" do |v|
+  #       # v.memory = 1024
+  #       v.memory = 4096
+  #     end
+  #   end
+  # end
 
-  config.vm.define "swarm-manager" do |d|
+  config.vm.define "concourseci" do |d|
     d.vm.box = "centos/7"
-    d.vm.hostname = "swarm-manager"
+    d.vm.hostname = "concourseci"
     d.vm.network "private_network", ip: "10.100.192.200"
-    d.vm.provision :shell, path: "scripts/bootstrap_ansible.sh"
-    # d.vm.provision :shell, inline: "PYTHONUNBUFFERED=1 ansible-playbook /vagrant/ansible/playbook.yml -i /vagrant/ansible/hosts/swarm"
-    d.vm.provision :shell, inline: "PYTHONUNBUFFERED=1 ansible-playbook -vvv /vagrant/ansible/playbook.yml -i /vagrant/ansible/hosts/swarm"
+    # d.vm.provision :shell, path: "scripts/bootstrap_ansible.sh"
+    # d.vm.provision :shell, inline: "PYTHONUNBUFFERED=1 ansible-playbook -vvv /vagrant/ansible/playbook.yml -i /vagrant/ansible/hosts/swarm"
     d.vm.provider "virtualbox" do |v|
       # v.memory = 1024
-      v.memory = 4096 
+      v.memory = 4096
     end
+    d.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "ansible/playbook.yml"
+    ansible.become = true
+    ansible.compatibility_mode = "2.0"
+    ansible.version = "2.8.5"
+end
   end
 
   if Vagrant.has_plugin?("vagrant-cachier")
