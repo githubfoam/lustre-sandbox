@@ -37,7 +37,7 @@ Vagrant.configure(2) do |config|
     ansible.playbook = "playbook.yml"
     ansible.become = true
     ansible.compatibility_mode = "2.0"
-    ansible.version = "2.8.5"
+    ansible.version = "2.9.7"
 end
   end
 
