@@ -46,11 +46,11 @@
       - name: Disable swap
         command: swapoff -a
 
-      - name: Copy join command
-        copy:
-            src: "{{ join_file }}"
-            dest: "/tmp/{{ join_file }}"
-            mode: 0777
+      # - name: Copy join command
+      #   copy:
+      #       src: "{{ join_file }}"
+      #       dest: "/tmp/{{ join_file }}"
+      #       mode: 0777
 
       # - name: Copy token value to variable
       #   command: "cat {{ join_file }}"
@@ -58,11 +58,14 @@
       #       chdir: /tmp
       #   register: token
 
-      - name: "Copy token value to variable"
-        command: "cat {{ join_command.stdout }}"
-        args:
-            chdir: /tmp
-        register: token
+      # - name: "Copy token value to variable"
+      #   command: "cat {{ join_command.stdout }}"
+      #   args:
+      #       chdir: /tmp
+      #   register: token
+
+      # - name: Join Docker swarm as worker
+      #   command: "docker swarm join --token {{ token.stdout }} {{ master_ip }}:2377"
 
       - name: Join Docker swarm as worker
-        command: "docker swarm join --token {{ token.stdout }} {{ master_ip }}:2377"
+        command: "docker swarm join --token {{ join_command.stdout  }} {{ master_ip }}:2377"

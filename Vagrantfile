@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
             "target" => "master",
             "master_ip" => "172.16.1.11",
             # "join_file" => "join.txt"
-            "join_file" => "/tmp/join.txt"
+            # "join_file" => "/tmp/join.txt"
         }
     end
   end
@@ -41,7 +41,7 @@ Vagrant.configure("2") do |config|
             "target" => "node1",
             "node_ip" => "172.16.1.12",
             "master_ip" => "172.16.1.11",
-            "join_file" => "join.txt"
+            # "join_file" => "join.txt"
         }
     end
   end
@@ -63,7 +63,7 @@ Vagrant.configure("2") do |config|
             "target" => "node2",
             "node_ip" => "172.16.1.13",
             "master_ip" => "172.16.1.11",
-            "join_file" => "join.txt"
+            # "join_file" => "join.txt"
         }
     end
   end
