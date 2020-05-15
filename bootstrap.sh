@@ -8,6 +8,9 @@ ls -lai
 cd content
 cd tests
 ls -lai
+python -V
+dnf install python -y
+python -V
 #install_vm.py ./install_vm.py --distro fedora --domain test-suite-fedora
 python install_vm.py --domain test-suite-fedora --distro fedora
 
