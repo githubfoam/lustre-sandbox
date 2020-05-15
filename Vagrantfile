@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
     master.vm.provision "ansible/master", type: "ansible_local" do |ansible|
         ansible.playbook = "ansible/provision-master.yml"
         ansible.compatibility_mode = "2.0"
-        ansible.version = "2.8.5"
+        ansible.version = "2.2.1.0"
         ansible.verbose = "v"
         ansible.extra_vars = {
             "target" => "master",
@@ -34,7 +34,7 @@ Vagrant.configure("2") do |config|
     node1.vm.provision "ansible/node1", type: "ansible_local" do |ansible|
         ansible.playbook = "ansible/provision-node.yml"
         ansible.compatibility_mode = "2.0"
-        ansible.version = "2.8.5"
+        ansible.version = "2.2.1.0"
         ansible.verbose = "v"
         ansible.extra_vars = {
             "target" => "node1",
@@ -53,10 +53,10 @@ Vagrant.configure("2") do |config|
         vb.memory = "4096"
     end
     # node2.vm.provision "ansible/node2", type: "ansible" do |ansible|
-    node2.vm.provision "ansible/node1", type: "ansible_local" do |ansible|    
+    node2.vm.provision "ansible/node1", type: "ansible_local" do |ansible|
         ansible.playbook = "ansible/provision-node.yml"
         ansible.compatibility_mode = "2.0"
-        ansible.version = "2.8.5"
+        ansible.version = "2.2.1.0"
         ansible.verbose = "v"
         ansible.extra_vars = {
             "target" => "node2",
