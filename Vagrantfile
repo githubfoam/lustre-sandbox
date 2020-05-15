@@ -27,7 +27,8 @@ Vagrant.configure(2) do |config|
     d.vm.hostname = "swarm-manager"
     d.vm.network "private_network", ip: "10.100.192.200"
     d.vm.provision :shell, path: "scripts/bootstrap_ansible.sh"
-    d.vm.provision :shell, inline: "PYTHONUNBUFFERED=1 ansible-playbook /vagrant/ansible/playbook.yml -i /vagrant/ansible/hosts/swarm"
+    # d.vm.provision :shell, inline: "PYTHONUNBUFFERED=1 ansible-playbook /vagrant/ansible/playbook.yml -i /vagrant/ansible/hosts/swarm"
+    d.vm.provision :shell, inline: "PYTHONUNBUFFERED=1 ansible-playbook -vvv /vagrant/ansible/playbook.yml -i /vagrant/ansible/hosts/swarm"
     d.vm.provider "virtualbox" do |v|
       v.memory = 1024
     end
