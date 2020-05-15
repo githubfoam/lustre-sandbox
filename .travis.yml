@@ -38,7 +38,8 @@ jobs:
           - sudo vagrant mutate "debian/stretch64" libvirt
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
-          - sudo vagrant up --provider=libvirt master node1 node2
+          - sudo vagrant up --provider=libvirt
+          # - sudo vagrant up --provider=libvirt master node1 node2
           # - sudo vagrant up --no-parallel --provider=libvirt # vagrant serial runs
           # - travis_wait 30 sudo vagrant up --provider=libvirt
           # - sudo vagrant up
