@@ -1,16 +1,14 @@
 #!/bin/bash
 
 # https://github.com/ComplianceAsCode/demo#Install-the-test-VM
-dnf install git -y
+dnf install git python -y
+python -V
 git clone https://github.com/ComplianceAsCode/demo.git
 git clone https://github.com/ComplianceAsCode/content.git
 ls -lai
 cd content
 cd tests
 ls -lai
-python -V
-dnf install python -y
-python -V
 #install_vm.py ./install_vm.py --distro fedora --domain test-suite-fedora
 python install_vm.py --domain test-suite-fedora --distro fedora
 
