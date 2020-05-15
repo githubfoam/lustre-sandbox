@@ -2,8 +2,8 @@
 # vi: set ft=ruby :
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/xenial64"
-  config.vm.host_name = "airflow"
+  config.vm.box = "ubuntu/trusty64"
+  config.vm.host_name = "bazelhost"
   config.vm.network "private_network", ip: "192.168.66.99"
 
   config.vm.provider "virtualbox" do |vb|
@@ -11,7 +11,9 @@ Vagrant.configure(2) do |config|
     vb.cpus = 1
   end
 
-  config.vm.synced_folder "airflow/", "/home/ubuntu/airflow"
-
-  config.vm.provision "shell", path: "bootstrap.sh"
+  # config.vm.synced_folder "airflow/", "/home/ubuntu/airflow"
+  # config.vm.provision "shell", path: "bootstrap.sh"
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "playbook.yml"
+  end
 end
