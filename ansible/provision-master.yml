@@ -53,14 +53,14 @@
 
       - name: Generate join command
         command: docker swarm join-token --quiet worker
-        register: join
+        register: join_command
 
       - name: "Debug join command"
         debug:
-            var: join
+            var: join_command
       - name: "Debug stdout join command"
         debug:
-            var: join.stdout
+            var: join_command.stdout
 
       - name: Copy join command to local file
         become: no
