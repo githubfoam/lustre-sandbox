@@ -7,7 +7,9 @@ git clone https://github.com/ComplianceAsCode/content.git
 ls -lai
 cd content
 ls -lai
-# install_vm.py ./install_vm.py --distro fedora --domain test-suite-fedora
+cd tests
+ls -lai
+install_vm.py ./install_vm.py --distro fedora --domain test-suite-fedora
 
 # apt-get update
 # apt-get install -y python3-dev python3-pip
