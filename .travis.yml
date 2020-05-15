@@ -33,8 +33,8 @@ jobs:
           # - sudo vagrant plugin install vagrant-vbguest #https://docs.openstack.org/developer/dragonflow/installation.html
           - sudo vagrant status
           - sudo virsh list --all #show all running KVM/libvirt VMs
-          - sudo vagrant box add "ubuntu/trusty64" --provider=virtualbox
-          - sudo vagrant mutate "ubuntu/trusty64" libvirt
+          - sudo vagrant box add "bento/fedora-31" --provider=virtualbox
+          - sudo vagrant mutate "bento/fedora-31" libvirt
           - vagrant box list #veridy installed boxes
           - vagrant status #Check the status of the VMs to see that none of them have been created yet
           # - sudo vagrant up --provider=libvirt vg-irods01
